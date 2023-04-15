@@ -19,7 +19,7 @@ df = pd.DataFrame(
              "DIAMETRO", "STATUS - DIAMETRO", "A/B", "STATUS - A/B"]
 )
 
-cap = cv2.VideoCapture('./assets/Video2_Vedacao.mp4')
+cap = cv2.VideoCapture('./assets/Video2_Vedacao_curto.mp4')
 
 
 num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -171,17 +171,17 @@ while (frame_atual < num_frames-1):
 
         if (diametro > 49.5 and diametro < 50.5):
             STATUS_DIAMETRO = "Aprovado"
-            DIAMETRO = diametro
+            DIAMETRO = round(diametro, 2)
         else:
             STATUS_DIAMETRO = "Reprovado"
-            DIAMETRO = diametro
+            DIAMETRO = round(diametro, 2)
 
         ab = calcula_relacao_eixo_a_e_b(ellipse)
         if (ab > 0.95 and ab < 1.05):
-            AB = ab
+            AB = round(ab, 2)
             STATUS_AB = "Aprovado"
         else:
-            AB = ab
+            AB = round(ab, 2)
             STATUS_AB = "Reprovado"
 
         data = {
@@ -213,4 +213,6 @@ while (frame_atual < num_frames-1):
     frame_atual = frame_atual + 10
 cap.release()
 cv2.destroyAllWindows()
+
 print(df)
+df.to_csv('./out.csv') 
