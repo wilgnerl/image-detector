@@ -2,19 +2,8 @@ import cv2
 import numpy as np
 from blob import detector
 import pandas as pd
-from keras.models import load_model
 from funcoes_aux import *
 import time
-
-
-# --------------- Neural network setup ---------------
-np.set_printoptions(suppress=True)
-
-# Load the trained model
-model = load_model("./keras_model.h5", compile=False)
-
-# Load the labels
-class_names = open("./labels.txt", "r").readlines()
 
 
 
@@ -58,19 +47,7 @@ while (frame_atual < num_frames-1):
 
 
     # ------------- Main image filtering ------------------
-    hsv = cv2.cvtColor(fig_borda, cv2.COLOR_BGR2HSV)
-    # Split the HSV channels of the image
-    h, s, v = cv2.split(hsv)
-    # Defines the channels threshholds
-    hsv_min = np.array([120, 0, 0])
-    hsv_max = np.array([255, 150, 95])
-    # Mask to extract information of the contour
-    mask = cv2.inRange(fig_borda, hsv_min, hsv_max)
-    result = cv2.bitwise_and(fig_borda, fig_borda, mask=~mask)
-    gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-    # Get the white object on black background (only caries the information of contour)
-    _, fig_gray = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
-    blur = cv2.medianBlur(fig_gray, 5)
+    blur = img_filtering(fig_borda)
 
     # ------- Logic to get the frame for analysis ---------
     contours, _ = cv2.findContours(
@@ -100,14 +77,13 @@ while (frame_atual < num_frames-1):
     if (transition_px == 255 and flag_image and not autoriza_contagem_de_frames):
 
 
-        # -------------- Criterios para o teste de borda --------------
         flag_image = False
         conta_imagem += 1
         autoriza_contagem_de_frames = True
         print(conta_imagem)
         
-        contours, _ = cv2.findContours(
-            blur, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # -------------- Criterios para o teste de borda --------------
+        contours, _ = cv2.findContours(blur, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         cnt = max(contours, key=cv2.contourArea)
         ellipse = cv2.fitEllipse(cnt)
@@ -140,21 +116,8 @@ while (frame_atual < num_frames-1):
 
 
         #----------- Criterios para o teste de superficie -------------
+        index = crit_teste_superficie(fig_borda)
 
-        # Resize the raw image into (224-height,224-width) pixels
-        image = cv2.resize(fig_borda, (224, 224),
-                           interpolation=cv2.INTER_AREA)
-
-        # Make the image a numpy array and reshape it to the models input shape.
-        image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-
-        # Normalize the image array
-        image = (image / 127.5) - 1
-
-        # Predicts the model
-        prediction = model.predict(image)
-        index = np.argmax(prediction)
-        confidence_score = prediction[0][index]
 
         #-------------------- Teste de superficie ---------------------
         if (index == 1):
@@ -180,6 +143,7 @@ while (frame_atual < num_frames-1):
         linha_mais_pixels = fun_diametro(blur)
         diametro = calcula_diametro(
             fig_borda.shape[0], 756, linha_mais_pixels)
+        
         #---------------------- Teste de diametro -----------------------
         if (diametro > 49.5 and diametro < 50.5):
             STATUS_DIAMETRO = "Aprovado"
@@ -230,4 +194,4 @@ cv2.destroyAllWindows()
 
 print(df)
 # Saves the Data frame on a CSV file
-df.to_csv('./out.csv') 
+df.to_csv('./video_result2.csv') 
