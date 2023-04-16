@@ -1,9 +1,7 @@
 import cv2
 import numpy as np
-from blob import detector
 import pandas as pd
 from funcoes_aux import *
-import time
 
 
 
@@ -174,6 +172,8 @@ while (frame_atual < num_frames-1):
         data = pd.DataFrame(data)
         df = pd.concat([df, data], ignore_index=True)
 
+
+    # ------- Logic to get the frame for analysis ---------
     if (transition_px == 0 and not flag_image):
         flag_image = True
 
@@ -194,4 +194,4 @@ cv2.destroyAllWindows()
 
 print(df)
 # Saves the Data frame on a CSV file
-df.to_csv('./video_result2.csv') 
+df.to_csv('./video_result.csv') 
